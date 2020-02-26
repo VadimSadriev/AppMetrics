@@ -1,3 +1,5 @@
+using App.Metrics.AspNetCore;
+using App.Metrics.Formatters.Prometheus;
 using AppMetrics.DAL;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +29,18 @@ namespace AppMetricsApi
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    webBuilder.UseMetricsWebTracking();
+                    webBuilder.UseMetrics(options =>
+                    {
+                        options.EndpointOptions = endpointsOptions =>
+                        {
+                            endpointsOptions.MetricsTextEndpointOutputFormatter = new MetricsPrometheusTextOutputFormatter();
+                            endpointsOptions.MetricsEndpointOutputFormatter = new MetricsPrometheusProtobufOutputFormatter();
+                            endpointsOptions.EnvironmentInfoEndpointEnabled = false;
+                        };
+                    });
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseKestrel(x => x.AllowSynchronousIO = true);
                 });
     }
 }

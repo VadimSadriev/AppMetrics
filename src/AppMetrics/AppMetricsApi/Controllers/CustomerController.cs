@@ -1,5 +1,7 @@
-﻿using AppMetrics.Application.Customers;
+﻿using App.Metrics;
+using AppMetrics.Application.Customers;
 using AppMetrics.Infrastructure.Contracts;
+using AppMetrics.Infrastructure.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -10,10 +12,12 @@ namespace AppMetricsApi.Controllers
     public class CustomerController : Controller
     {
         private readonly ICustomerService _customerService;
+        private readonly IMetrics _metrics;
 
-        public CustomerController(ICustomerService customerService)
+        public CustomerController(ICustomerService customerService, IMetrics metrics)
         {
             _customerService = customerService;
+            _metrics = metrics;
         }
 
         [HttpGet]
@@ -28,6 +32,7 @@ namespace AppMetricsApi.Controllers
         public async Task<IActionResult> Create([FromBody]CustomerCreateRequest customerCreateRequest)
         {
             var customerId = await _customerService.Create(customerCreateRequest);
+            _metrics.Measure.Counter.Increment(MetricsRegistry.CreatedCustomersCounter);
 
             return Ok(await _customerService.GetById(customerId));
         }

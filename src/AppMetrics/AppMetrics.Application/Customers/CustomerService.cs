@@ -1,6 +1,8 @@
-﻿using AppMetrics.DAL;
+﻿using App.Metrics;
+using AppMetrics.DAL;
 using AppMetrics.DAL.Entities;
 using AppMetrics.Infrastructure.Contracts;
+using AppMetrics.Infrastructure.Metrics;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -13,11 +15,13 @@ namespace AppMetrics.Application.Customers
     {
         private readonly DataContext _context;
         private readonly IMapper _mapper;
+        private readonly IMetrics _metrics;
 
-        public CustomerService(DataContext context, IMapper mapper)
+        public CustomerService(DataContext context, IMapper mapper, IMetrics metrics)
         {
             _context = context;
             _mapper = mapper;
+            _metrics = metrics;
         }
 
         public async Task<Guid> Create(CustomerCreateRequest customerCreateRequest)
@@ -47,6 +51,8 @@ namespace AppMetrics.Application.Customers
                 .Include(x => x.Orders)
                 .AsNoTracking()
                 .ToArrayAsync();
+
+            _metrics.Measure.Counter.Increment(MetricsRegistry.CalledGetAllCustomers);
 
             return _mapper.Map<ICollection<CustomerResponse>>(customers);
         }
